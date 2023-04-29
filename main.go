@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
 	"points-interview/packages/util"
+	"strconv"
 )
 
 type Error struct {
@@ -17,7 +17,7 @@ type Error struct {
 /*
 Handler function for the /tax-calculator route.
 Accepts a GET request.
-Returns the tax brackets for 2022 year.
+Returns the tax brackets for the year 2022.
 */
 func calculator(w http.ResponseWriter, r *http.Request) {
 	results := make(map[string]interface{})
@@ -39,9 +39,9 @@ Returns the tax brackets for the tax year passed and calculate the tax if income
 */
 func tax(w http.ResponseWriter, r *http.Request) {
 	results := make(map[string]interface{})
-	
+
 	vars := mux.Vars(r)
-	//Convert string tax-year to integer tax-year
+	// Convert string tax-year to integer tax-year
 	taxYear, err := strconv.Atoi(vars["tax-year"])
 	if err != nil {
 		// Handle the error
@@ -57,7 +57,7 @@ func tax(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//calculate the tax bracket for the year passed
+	// Calculate the tax bracket for the year passed
 	brackets, err := util.GetTaxBrackets(taxYear)
 
 	if err != nil {
@@ -77,17 +77,18 @@ func tax(w http.ResponseWriter, r *http.Request) {
 			Income string `json:"income"`
 		}
 
+		// Calculate tax if request body length is greater than zero.
 		if len(body) != 0 {
 			var reqBody RequestBody
 			err = json.Unmarshal(body, &reqBody)
+
 			if err != nil {
 				results["error"] = Error{Message: err.Error()}
 				util.SendResponse(w, results)
 				return
-
 			}
 
-			//get income from request body and convert into float
+			// Get income from request body and convert into float
 			currentIncome, err := strconv.ParseFloat(reqBody.Income, 64)
 			if err != nil {
 				results["error"] = Error{Message: err.Error()}
@@ -95,27 +96,30 @@ func tax(w http.ResponseWriter, r *http.Request) {
 				return
 
 			} else {
-				//calculate the tax based on the income passed
-				results = util.CalculateTax(results, currentIncome)
+				if currentIncome <= 0 {
+					results["error"] = Error{Message: "Income cannot be less than zero."}
+					util.SendResponse(w, results)
+					return
+				}
 
+				// Calculate the tax based on the income received
+				results = util.CalculateTax(results, currentIncome)
 			}
 		}
-
 	}
-	//Send Response
+	// Send Json Response
 	util.SendResponse(w, results)
 }
-
 
 /*
 This is a function that handles HTTP requests using a mux router.
 */
 func handleRequests() {
-	//creates a new instance of a mux router
+	// Creates a new instance of a mux router
 	myRouter := mux.NewRouter().StrictSlash(true)
-	//replace http.HandleFunc with myRouter.HandleFunc
+	// Replace http.HandleFunc with myRouter.HandleFunc
 	myRouter.HandleFunc("/tax-calculator", calculator).Methods(http.MethodGet)
-	myRouter.HandleFunc("/tax-calculator/tax-year/{tax-year}",tax).Methods(http.MethodPost)
+	myRouter.HandleFunc("/tax-calculator/tax-year/{tax-year}", tax).Methods(http.MethodPost)
 	log.Fatal(http.ListenAndServe(":10000", myRouter))
 }
 

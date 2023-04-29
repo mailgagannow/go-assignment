@@ -23,19 +23,18 @@ GetTaxBrackets retrieves tax brackets data for a specific year based on the give
 @return error - the error message if an error occurred during file reading or unmarshalling
 */
 func GetTaxBrackets(year int) ([]TaxBrackets, error) {
-	fmt.Println(year)
 
 	filename := fmt.Sprintf("tax-files/tax-brackets--%d.json", year)
-	fmt.Println(filename)
 
 	data, err := ioutil.ReadFile(filename)
-	if err != nil {
 
+	if err != nil {
 		return nil, err
 	}
 
 	var brackets []TaxBrackets
 	err = json.Unmarshal(data, &brackets)
+
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +59,6 @@ func SendResponse(w http.ResponseWriter, results map[string]interface{}) {
 	}
 }
 
-
 /*
 CalculateTax function takes a map of tax brackets and income, and calculates the federal tax amount, effective tax rate, and tax slabs.
 
@@ -76,7 +74,7 @@ func CalculateTax(results map[string]interface{}, income float64) map[string]int
 		federalTax := 0.0
 		var slabs []map[string]interface{}
 
-		// loop over the brackets slice
+		// loop over the brackets
 		for _, bracket := range brackets {
 			currentSlabTax := 0.0
 			diff := 0.0
@@ -94,11 +92,13 @@ func CalculateTax(results map[string]interface{}, income float64) map[string]int
 				diff = maxValue - minValue
 			}
 
-			taxableIncome,_ := strconv.ParseFloat(fmt.Sprintf("%.2f", math.Min(diff, remainingIncome)), 64)
+			taxableIncome, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", math.Min(diff, remainingIncome)), 64)
 			currentSlabTax, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", taxableIncome*bracket.Rate), 64)
+
 			federalTax += currentSlabTax
 			remainingIncome -= taxableIncome
 
+			//add the current slab and the tax calculated in that slab for the eligible taxable income.
 			slab := map[string]interface{}{
 				"min":            bracket.Min,
 				"max":            bracket.Max,
@@ -106,21 +106,17 @@ func CalculateTax(results map[string]interface{}, income float64) map[string]int
 				"tax":            currentSlabTax,
 				"taxable_income": taxableIncome,
 			}
-			
-			slabs = append(slabs, slab)
 
+			slabs = append(slabs, slab)
 		}
 
 		effectiveTaxRate, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", (federalTax/currentIncome)*100), 64)
 
-		fmt.Println(federalTax)
-		fmt.Println(effectiveTaxRate)
 		results["totalIncome"] = currentIncome
 		results["taxAmount"] = federalTax
 		results["effectiveTaxRate"] = effectiveTaxRate
 		results["taxPerSlab"] = slabs
 
-		//fmt.Println("%s results \n", results)
 	}
 
 	return results
