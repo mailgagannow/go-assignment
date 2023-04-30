@@ -47,16 +47,23 @@ SendResponse function accepts an http.ResponseWriter and a map[string]interface{
 
 @param w http.ResponseWriter
 @param results map[string]interface{}
+@param statusCode
 @return None
 */
-func SendResponse(w http.ResponseWriter, results map[string]interface{}) {
+func SendResponse(w http.ResponseWriter, results map[string]interface{}, statusCode ...int) {
+
 	w.Header().Set("Content-Type", "application/json")
 	if message, ok := results["error"]; ok {
-		w.WriteHeader(http.StatusBadRequest)
+		if len(statusCode) > 0 {
+			w.WriteHeader(statusCode[0])
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
 		json.NewEncoder(w).Encode(message)
 	} else {
 		json.NewEncoder(w).Encode(results)
 	}
+
 }
 
 /*
@@ -98,7 +105,7 @@ func CalculateTax(results map[string]interface{}, income float64) map[string]int
 			federalTax += currentSlabTax
 			remainingIncome -= taxableIncome
 
-			//add the current slab and the tax calculated in that slab for the eligible taxable income.
+			// Add the current slab and the tax calculated in that slab for the eligible taxable income.
 			slab := map[string]interface{}{
 				"min":            bracket.Min,
 				"max":            bracket.Max,

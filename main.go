@@ -112,11 +112,24 @@ func tax(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
+Send Error Response If Url is not found.
+*/
+func notFoundHandler(w http.ResponseWriter, r *http.Request) {
+
+	results := make(map[string]interface{})
+	results["error"] = Error{Message: "Url Not Found"}
+	util.SendResponse(w, results)
+}
+
+/*
 This is a function that handles HTTP requests using a mux router.
 */
 func handleRequests() {
+
 	// Creates a new instance of a mux router
 	myRouter := mux.NewRouter().StrictSlash(true)
+	myRouter.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+
 	// Replace http.HandleFunc with myRouter.HandleFunc
 	myRouter.HandleFunc("/tax-calculator", calculator).Methods(http.MethodGet)
 	myRouter.HandleFunc("/tax-calculator/tax-year/{tax-year}", tax).Methods(http.MethodPost)
