@@ -84,7 +84,6 @@ func CalculateTax(results map[string]interface{}, income float64) map[string]int
 		// loop over the brackets
 		for _, bracket := range brackets {
 			currentSlabTax := 0.0
-			diff := 0.0
 
 			if remainingIncome <= 0 {
 				break
@@ -94,12 +93,10 @@ func CalculateTax(results map[string]interface{}, income float64) map[string]int
 			minValue := bracket.Min
 
 			if maxValue == 0 {
-				diff = minValue
-			} else {
-				diff = maxValue - minValue
-			}
+				maxValue = math.MaxFloat64
+			} 
 
-			taxableIncome, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", math.Min(diff, remainingIncome)), 64)
+			taxableIncome, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", math.Min(maxValue-minValue, remainingIncome)), 64)
 			currentSlabTax, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", taxableIncome*bracket.Rate), 64)
 
 			federalTax += currentSlabTax
