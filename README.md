@@ -131,7 +131,7 @@ Response
 
 ## Testing
 
-To run the tests for My Go API, navigate to the project directory and run the following command:
+To run the tests for My TAX CALCULATOR API, navigate to the project directory and run the following command:
 
 ```
 go test ./...
