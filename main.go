@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"points-interview/packages/util"
@@ -29,7 +28,7 @@ func calculator(w http.ResponseWriter, r *http.Request) {
 		results["tax_brackets"] = brackets
 	}
 
-	util.SendResponse(w, results)
+	util.SendJsonResponse(w, results)
 }
 
 /*
@@ -46,14 +45,14 @@ func tax(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Handle the error
 		results["error"] = Error{Message: err.Error()}
-		util.SendResponse(w, results)
+		util.SendJsonResponse(w, results)
 		return
 
 	}
 
 	if taxYear > 2022 || taxYear < 2019 {
 		results["error"] = Error{Message: "Please enter year between 2019 and 2022"}
-		util.SendResponse(w, results)
+		util.SendJsonResponse(w, results)
 		return
 	}
 
@@ -62,53 +61,46 @@ func tax(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		results["error"] = Error{Message: err.Error()}
-		util.SendResponse(w, results)
+		util.SendJsonResponse(w, results)
 		return
 	} else {
 		results["tax_brackets"] = brackets
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			results["error"] = Error{Message: err.Error()}
-			util.SendResponse(w, results)
-			return
-		}
-
 		type RequestBody struct {
 			Income string `json:"income"`
 		}
 
-		// Calculate tax if request body length is greater than zero.
-		if len(body) != 0 {
+		// Calculate tax if request content length is greater than zero.
+		if r.ContentLength > 0 {
 			var reqBody RequestBody
-			err = json.Unmarshal(body, &reqBody)
 
+			err := json.NewDecoder(r.Body).Decode(&reqBody)
 			if err != nil {
 				results["error"] = Error{Message: err.Error()}
-				util.SendResponse(w, results)
+				util.SendJsonResponse(w, results)
 				return
 			}
-
 			// Get income from request body and convert into float
 			currentIncome, err := strconv.ParseFloat(reqBody.Income, 64)
 			if err != nil {
 				results["error"] = Error{Message: err.Error()}
-				util.SendResponse(w, results)
+				util.SendJsonResponse(w, results)
 				return
 
 			} else {
 				if currentIncome <= 0 {
 					results["error"] = Error{Message: "Income cannot be less than zero."}
-					util.SendResponse(w, results)
+					util.SendJsonResponse(w, results)
 					return
 				}
-
 				// Calculate the tax based on the income received
 				results = util.CalculateTax(results, currentIncome)
 			}
+
 		}
+
 	}
 	// Send Json Response
-	util.SendResponse(w, results)
+	util.SendJsonResponse(w, results)
 }
 
 /*
@@ -118,7 +110,7 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 
 	results := make(map[string]interface{})
 	results["error"] = Error{Message: "Url Not Found"}
-	util.SendResponse(w, results)
+	util.SendJsonResponse(w, results, http.StatusNotFound)
 }
 
 /*

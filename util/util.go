@@ -50,7 +50,7 @@ SendResponse function accepts an http.ResponseWriter and a map[string]interface{
 @param statusCode
 @return None
 */
-func SendResponse(w http.ResponseWriter, results map[string]interface{}, statusCode ...int) {
+func SendJsonResponse(w http.ResponseWriter, results map[string]interface{}, statusCode ...int) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if message, ok := results["error"]; ok {
